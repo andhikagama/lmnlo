@@ -176,37 +176,37 @@ func TestGetByID(t *testing.T) {
 	})
 }
 
-// func TestDelete(t *testing.T) {
-// 	mockUserRepo := new(mocks.Repository)
+func TestDelete(t *testing.T) {
+	mockUserRepo := new(mocks.Repository)
 
-// 	t.Run("success", func(t *testing.T) {
-// 		mockUserRepo.On("Delete", mock.AnythingOfType("int64")).Return(true, nil).Once()
-// 		u := usecase.NewUserUsecase(mockUserRepo)
+	t.Run("success", func(t *testing.T) {
+		mockUserRepo.On("Delete", mock.AnythingOfType("int64")).Return(true, nil).Once()
+		u := usecase.NewUserUsecase(mockUserRepo)
 
-// 		err := u.Delete(mockUser.ID)
+		err := u.Delete(mockUser.ID)
 
-// 		assert.NoError(t, err)
-// 		mockUserRepo.AssertExpectations(t)
-// 	})
+		assert.NoError(t, err)
+		mockUserRepo.AssertExpectations(t)
+	})
 
-// 	t.Run("error", func(t *testing.T) {
-// 		mockUserRepo.On("Delete", mock.AnythingOfType("int64")).Return(false, errors.New(`error`)).Once()
-// 		u := usecase.NewUserUsecase(mockUserRepo)
+	t.Run("error", func(t *testing.T) {
+		mockUserRepo.On("Delete", mock.AnythingOfType("int64")).Return(false, errors.New(`error`)).Once()
+		u := usecase.NewUserUsecase(mockUserRepo)
 
-// 		err := u.Delete(mockUser.ID)
+		err := u.Delete(mockUser.ID)
 
-// 		assert.Error(t, err)
-// 		mockUserRepo.AssertExpectations(t)
-// 	})
+		assert.Error(t, err)
+		mockUserRepo.AssertExpectations(t)
+	})
 
-// 	t.Run("no-data", func(t *testing.T) {
-// 		mockUserRepo.On("Delete", mock.AnythingOfType("int64")).Return(false, nil).Once()
-// 		u := usecase.NewUserUsecase(mockUserRepo)
+	t.Run("no-data", func(t *testing.T) {
+		mockUserRepo.On("Delete", mock.AnythingOfType("int64")).Return(false, nil).Once()
+		u := usecase.NewUserUsecase(mockUserRepo)
 
-// 		err := u.Delete(mockUser.ID)
+		err := u.Delete(mockUser.ID)
 
-// 		assert.Error(t, err)
-// 		assert.Equal(t, response.ErrNotFound, err)
-// 		mockUserRepo.AssertExpectations(t)
-// 	})
-// }
+		assert.Error(t, err)
+		assert.Equal(t, response.ErrNotFound, err)
+		mockUserRepo.AssertExpectations(t)
+	})
+}

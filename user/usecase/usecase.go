@@ -69,3 +69,18 @@ func (u *userUsecase) Update(usr *entity.User) error {
 func (u *userUsecase) GetByID(id int64) (*entity.User, error) {
 	return u.userRepo.GetByID(id)
 }
+
+// Delete ...
+func (u *userUsecase) Delete(id int64) error {
+	ok, err := u.userRepo.Delete(id)
+
+	if err != nil {
+		return err
+	}
+
+	if !ok {
+		return response.ErrNotFound
+	}
+
+	return nil
+}

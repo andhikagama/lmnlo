@@ -317,3 +317,86 @@ func TestGetByID(t *testing.T) {
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 }
+
+func TestDelete(t *testing.T) {
+	db, mock, err := sqlmock.New()
+
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+
+	defer db.Close()
+
+	t.Run("success", func(t *testing.T) {
+		mock.ExpectBegin()
+		mock.ExpectPrepare(`UPDATE user`).ExpectExec().WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectCommit()
+
+		repo := userRepo.NewUserRepository(db)
+		ok, err := repo.Delete(mockUser.ID)
+
+		assert.NoError(t, err)
+		assert.True(t, ok)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("success-no-data", func(t *testing.T) {
+		mock.ExpectBegin()
+		mock.ExpectPrepare(`UPDATE user`).ExpectExec().WillReturnResult(sqlmock.NewResult(1, 0))
+		mock.ExpectRollback()
+
+		repo := userRepo.NewUserRepository(db)
+		ok, err := repo.Delete(mockUser.ID)
+
+		assert.NoError(t, err)
+		assert.False(t, ok)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("error-begin", func(t *testing.T) {
+		mock.ExpectBegin().WillReturnError(fmt.Errorf("Some error"))
+		repo := userRepo.NewUserRepository(db)
+		ok, err := repo.Delete(mockUser.ID)
+
+		assert.Error(t, err)
+		assert.False(t, ok)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("error-prepare", func(t *testing.T) {
+		mock.ExpectBegin()
+		mock.ExpectPrepare(`UPDATE user`).WillReturnError(fmt.Errorf("Some error"))
+
+		repo := userRepo.NewUserRepository(db)
+		ok, err := repo.Delete(mockUser.ID)
+
+		assert.Error(t, err)
+		assert.False(t, ok)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("error-exec", func(t *testing.T) {
+		mock.ExpectBegin()
+		mock.ExpectPrepare(`UPDATE user`).ExpectExec().WillReturnError(fmt.Errorf("Some error"))
+
+		repo := userRepo.NewUserRepository(db)
+		ok, err := repo.Delete(mockUser.ID)
+
+		assert.Error(t, err)
+		assert.False(t, ok)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("error-affected", func(t *testing.T) {
+		mock.ExpectBegin()
+		mock.ExpectPrepare(`UPDATE user`).ExpectExec().WillReturnResult(sqlmock.NewErrorResult(fmt.Errorf("Some error")))
+		mock.ExpectRollback()
+
+		repo := userRepo.NewUserRepository(db)
+		ok, err := repo.Delete(mockUser.ID)
+
+		assert.Error(t, err)
+		assert.False(t, ok)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+}

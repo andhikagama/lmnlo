@@ -385,3 +385,95 @@ func TestGetByID(t *testing.T) {
 		mockUCase.AssertExpectations(t)
 	})
 }
+
+func TestDelete(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		mockUCase := new(mocks.Usecase)
+		mockUCase.On("Delete", mock.AnythingOfType(`int64`)).Return(nil).Once()
+
+		e := echo.New()
+		req := httptest.NewRequest(echo.DELETE, "/", strings.NewReader(""))
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.SetPath("user")
+		c.SetParamNames(`id`)
+		c.SetParamValues(`1`)
+
+		handler := handler.UserHTTPHandler{
+			Usecase: mockUCase,
+		}
+		handler.Delete(c)
+
+		assert.Equal(t, http.StatusNoContent, rec.Code)
+		mockUCase.AssertExpectations(t)
+	})
+
+	t.Run("bad-params", func(t *testing.T) {
+		mockUCase := new(mocks.Usecase)
+
+		e := echo.New()
+		req := httptest.NewRequest(echo.DELETE, "/", strings.NewReader(""))
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.SetPath("user")
+		c.SetParamNames(`id`)
+		c.SetParamValues(`a`)
+
+		handler := handler.UserHTTPHandler{
+			Usecase: mockUCase,
+		}
+
+		handler.Delete(c)
+
+		assert.Equal(t, http.StatusNotFound, rec.Code)
+		mockUCase.AssertExpectations(t)
+	})
+
+	t.Run("not-found", func(t *testing.T) {
+		mockUCase := new(mocks.Usecase)
+		mockUCase.On("Delete", mock.AnythingOfType(`int64`)).Return(response.ErrNotFound).Once()
+
+		e := echo.New()
+		req := httptest.NewRequest(echo.DELETE, "/", strings.NewReader(""))
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.SetPath("user")
+		c.SetParamNames(`id`)
+		c.SetParamValues(`1`)
+
+		handler := handler.UserHTTPHandler{
+			Usecase: mockUCase,
+		}
+
+		handler.Delete(c)
+
+		assert.Equal(t, http.StatusNotFound, rec.Code)
+		mockUCase.AssertExpectations(t)
+	})
+
+	t.Run("error", func(t *testing.T) {
+		mockUCase := new(mocks.Usecase)
+		mockUCase.On("Delete", mock.AnythingOfType(`int64`)).Return(errors.New(`error`)).Once()
+
+		e := echo.New()
+		req := httptest.NewRequest(echo.DELETE, "/", strings.NewReader(""))
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.SetPath("user")
+		c.SetParamNames(`id`)
+		c.SetParamValues(`1`)
+
+		handler := handler.UserHTTPHandler{
+			Usecase: mockUCase,
+		}
+
+		handler.Delete(c)
+
+		assert.Equal(t, http.StatusInternalServerError, rec.Code)
+		mockUCase.AssertExpectations(t)
+	})
+}

@@ -162,3 +162,29 @@ func (h *UserHTTPHandler) GetByID(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, res)
 }
+
+// GetByID ...
+func (h *UserHTTPHandler) Delete(c echo.Context) error {
+	id, err := strconv.Atoi(c.Param(`id`))
+	if err != nil || id == 0 {
+		return c.JSON(http.StatusNotFound, &response.Wrapper{
+			Message: response.ErrNotFound.Error(),
+		})
+	}
+
+	err = h.Usecase.Delete(int64(id))
+
+	if err != nil {
+		if err == response.ErrNotFound {
+			return c.JSON(http.StatusNotFound, &response.Wrapper{
+				Message: response.ErrNotFound.Error(),
+			})
+		}
+
+		return c.JSON(http.StatusInternalServerError, &response.Wrapper{
+			Message: response.ErrServer.Error(),
+		})
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}

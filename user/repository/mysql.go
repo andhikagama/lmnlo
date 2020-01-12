@@ -170,6 +170,48 @@ func (m *userRepository) GetByID(id int64) (*entity.User, error) {
 	return result[0], err
 }
 
+func (m *userRepository) Delete(id int64) (bool, error) {
+	trx, err := m.Conn.Begin()
+
+	if err != nil {
+		return false, err
+	}
+
+	query := sq.Update("user").
+		Set("delete_time", time.Now()).
+		Where("id = ?", id)
+
+	sql, args, _ := query.ToSql()
+
+	stmt, err := trx.Prepare(sql)
+	if err != nil {
+		trx.Rollback()
+		return false, err
+	}
+	defer stmt.Close()
+
+	result, err := stmt.Exec(args...)
+
+	if err != nil {
+		trx.Rollback()
+		return false, err
+	}
+
+	affected, err := result.RowsAffected()
+	if err != nil {
+		trx.Rollback()
+		return false, err
+	}
+
+	if affected != 1 {
+		trx.Rollback()
+		return false, nil
+	}
+
+	err = trx.Commit()
+	return true, nil
+}
+
 func (m *userRepository) unmarshal(rows *sql.Rows) ([]*entity.User, error) {
 	results := []*entity.User{}
 

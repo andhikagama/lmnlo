@@ -15,7 +15,7 @@ Run `go mod tidy` to install dependencies required or
 
 Run `go mod vendor` to install dependencies required using vendor directory (like dep or glide)
 
-Make sure you have dep installed
+Make sure you have supported go version to use modules
 
 ## Development server
 
