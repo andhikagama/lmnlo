@@ -34,13 +34,27 @@ func (_m *Usecase) Fetch(f *filter.User) ([]*entity.User, error) {
 	return r0, r1
 }
 
-// Register provides a mock function with given fields: g
-func (_m *Usecase) Register(g *entity.User) error {
-	ret := _m.Called(g)
+// Register provides a mock function with given fields: usr
+func (_m *Usecase) Register(usr *entity.User) error {
+	ret := _m.Called(usr)
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(*entity.User) error); ok {
-		r0 = rf(g)
+		r0 = rf(usr)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// Update provides a mock function with given fields: usr
+func (_m *Usecase) Update(usr *entity.User) error {
+	ret := _m.Called(usr)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*entity.User) error); ok {
+		r0 = rf(usr)
 	} else {
 		r0 = ret.Error(0)
 	}

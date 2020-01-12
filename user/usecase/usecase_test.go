@@ -4,8 +4,10 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/andhikagama/lmnlo/models/entity"
 	"github.com/andhikagama/lmnlo/models/filter"
+	"github.com/andhikagama/lmnlo/models/response"
+
+	"github.com/andhikagama/lmnlo/models/entity"
 	"github.com/andhikagama/lmnlo/user/mocks"
 	"github.com/andhikagama/lmnlo/user/usecase"
 	"github.com/stretchr/testify/assert"
@@ -27,6 +29,7 @@ func TestStore(t *testing.T) {
 	mockUserRepo := new(mocks.Repository)
 
 	t.Run("success", func(t *testing.T) {
+		mockUserRepo.On("Fetch", mock.AnythingOfType("*filter.User")).Return(make([]*entity.User, 0), nil).Once()
 		mockUserRepo.On("Store", mock.AnythingOfType("*entity.User")).Return(nil).Once()
 		u := usecase.NewUserUsecase(mockUserRepo)
 
@@ -36,7 +39,19 @@ func TestStore(t *testing.T) {
 		mockUserRepo.AssertExpectations(t)
 	})
 
+	t.Run("already-exist", func(t *testing.T) {
+		mockUserRepo.On("Fetch", mock.AnythingOfType("*filter.User")).Return(mockUsers, nil).Once()
+		u := usecase.NewUserUsecase(mockUserRepo)
+
+		err := u.Register(&mockUser)
+
+		assert.Error(t, err)
+		assert.EqualError(t, err, response.ErrAlreadyExist.Error())
+		mockUserRepo.AssertExpectations(t)
+	})
+
 	t.Run("error", func(t *testing.T) {
+		mockUserRepo.On("Fetch", mock.AnythingOfType("*filter.User")).Return(make([]*entity.User, 0), nil).Once()
 		mockUserRepo.On("Store", mock.AnythingOfType("*entity.User")).Return(errors.New(`error`)).Once()
 		u := usecase.NewUserUsecase(mockUserRepo)
 
@@ -89,65 +104,43 @@ func TestFetch(t *testing.T) {
 	})
 }
 
-// func TestUpdate(t *testing.T) {
-// 	mockUserRepo := new(mocks.Repository)
-// 	mockUser := entity.User{
-// 		ID:            1,
-// 		Title:         "Align pillow",
-// 		Group:         `Beds`,
-// 		Type:          `count`,
-// 		Checked:       false,
-// 		Count:         0,
-// 		ImageURL:      ``,
-// 		Description:   ``,
-// 		ProductTypeID: 3,
-// 	}
+func TestUpdate(t *testing.T) {
+	mockUserRepo := new(mocks.Repository)
 
-// 	t.Run("success", func(t *testing.T) {
-// 		mockUserRepo.On("Update", mock.AnythingOfType("*entity.User")).Return(true, nil).Once()
-// 		u := usecase.NewUserUsecase(mockUserRepo)
+	t.Run("success", func(t *testing.T) {
+		mockUserRepo.On("Update", mock.AnythingOfType("*entity.User")).Return(true, nil).Once()
+		u := usecase.NewUserUsecase(mockUserRepo)
 
-// 		err := u.Update(&mockUser)
+		err := u.Update(&mockUser)
 
-// 		assert.NoError(t, err)
-// 		mockUserRepo.AssertExpectations(t)
-// 	})
+		assert.NoError(t, err)
+		mockUserRepo.AssertExpectations(t)
+	})
 
-// 	t.Run("error", func(t *testing.T) {
-// 		mockUserRepo.On("Update", mock.AnythingOfType("*entity.User")).Return(false, errors.New(`error`)).Once()
-// 		u := usecase.NewUserUsecase(mockUserRepo)
+	t.Run("error", func(t *testing.T) {
+		mockUserRepo.On("Update", mock.AnythingOfType("*entity.User")).Return(false, errors.New(`error`)).Once()
+		u := usecase.NewUserUsecase(mockUserRepo)
 
-// 		err := u.Update(&mockUser)
+		err := u.Update(&mockUser)
 
-// 		assert.Error(t, err)
-// 		mockUserRepo.AssertExpectations(t)
-// 	})
+		assert.Error(t, err)
+		mockUserRepo.AssertExpectations(t)
+	})
 
-// 	t.Run("no-data", func(t *testing.T) {
-// 		mockUserRepo.On("Update", mock.AnythingOfType("*entity.User")).Return(false, nil).Once()
-// 		u := usecase.NewUserUsecase(mockUserRepo)
+	t.Run("no-data", func(t *testing.T) {
+		mockUserRepo.On("Update", mock.AnythingOfType("*entity.User")).Return(false, nil).Once()
+		u := usecase.NewUserUsecase(mockUserRepo)
 
-// 		err := u.Update(&mockUser)
+		err := u.Update(&mockUser)
 
-// 		assert.Error(t, err)
-// 		assert.Equal(t, response.ErrNotFound, err)
-// 		mockUserRepo.AssertExpectations(t)
-// 	})
-// }
+		assert.Error(t, err)
+		assert.Equal(t, response.ErrNotFound, err)
+		mockUserRepo.AssertExpectations(t)
+	})
+}
 
 // func TestDelete(t *testing.T) {
 // 	mockUserRepo := new(mocks.Repository)
-// 	mockUser := entity.User{
-// 		ID:            1,
-// 		Title:         "Align pillow",
-// 		Group:         `Beds`,
-// 		Type:          `count`,
-// 		Checked:       false,
-// 		Count:         0,
-// 		ImageURL:      ``,
-// 		Description:   ``,
-// 		ProductTypeID: 3,
-// 	}
 
 // 	t.Run("success", func(t *testing.T) {
 // 		mockUserRepo.On("Delete", mock.AnythingOfType("int64")).Return(true, nil).Once()

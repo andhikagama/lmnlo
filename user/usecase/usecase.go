@@ -49,3 +49,18 @@ func (u *userUsecase) Register(usr *entity.User) error {
 func (u *userUsecase) Fetch(f *filter.User) ([]*entity.User, error) {
 	return u.userRepo.Fetch(f)
 }
+
+// Update ...
+func (u *userUsecase) Update(usr *entity.User) error {
+	ok, err := u.userRepo.Update(usr)
+
+	if err != nil {
+		return err
+	}
+
+	if !ok {
+		return response.ErrNotFound
+	}
+
+	return nil
+}

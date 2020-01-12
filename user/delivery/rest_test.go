@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/andhikagama/lmnlo/models/entity"
+	"github.com/andhikagama/lmnlo/models/response"
 	handler "github.com/andhikagama/lmnlo/user/delivery"
 	"github.com/andhikagama/lmnlo/user/mocks"
 	"github.com/labstack/echo"
@@ -44,6 +45,28 @@ func TestStore(t *testing.T) {
 		handler.Register(c)
 
 		assert.Equal(t, http.StatusOK, rec.Code)
+		mockUCase.AssertExpectations(t)
+	})
+
+	t.Run("already-exist", func(t *testing.T) {
+		mockUCase := new(mocks.Usecase)
+		mockUCase.On("Register", mock.AnythingOfType(`*entity.User`)).Return(response.ErrAlreadyExist).Once()
+
+		e := echo.New()
+		req := httptest.NewRequest(echo.POST, "/", strings.NewReader(""))
+
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.SetPath("user")
+
+		handler := handler.UserHTTPHandler{
+			Usecase: mockUCase,
+		}
+
+		handler.Register(c)
+
+		assert.Equal(t, http.StatusConflict, rec.Code)
 		mockUCase.AssertExpectations(t)
 	})
 
@@ -173,6 +196,98 @@ func TestFetch(t *testing.T) {
 			Usecase: mockUCase,
 		}
 		handler.Fetch(c)
+
+		assert.Equal(t, http.StatusInternalServerError, rec.Code)
+		mockUCase.AssertExpectations(t)
+	})
+}
+
+func TestUpdate(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		mockUCase := new(mocks.Usecase)
+		mockUCase.On("Update", mock.AnythingOfType(`*entity.User`)).Return(nil).Once()
+
+		e := echo.New()
+		req := httptest.NewRequest(echo.POST, "/", strings.NewReader(""))
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.SetPath("user")
+		c.SetParamNames(`id`)
+		c.SetParamValues(`1`)
+
+		handler := handler.UserHTTPHandler{
+			Usecase: mockUCase,
+		}
+		handler.Update(c)
+
+		assert.Equal(t, http.StatusOK, rec.Code)
+		mockUCase.AssertExpectations(t)
+	})
+
+	t.Run("bad-params", func(t *testing.T) {
+		mockUCase := new(mocks.Usecase)
+
+		e := echo.New()
+		req := httptest.NewRequest(echo.POST, "/", strings.NewReader(""))
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.SetPath("user")
+		c.SetParamNames(`id`)
+		c.SetParamValues(`a`)
+
+		handler := handler.UserHTTPHandler{
+			Usecase: mockUCase,
+		}
+
+		handler.Update(c)
+
+		assert.Equal(t, http.StatusNotFound, rec.Code)
+		mockUCase.AssertExpectations(t)
+	})
+
+	t.Run("not-found", func(t *testing.T) {
+		mockUCase := new(mocks.Usecase)
+		mockUCase.On("Update", mock.AnythingOfType(`*entity.User`)).Return(response.ErrNotFound).Once()
+
+		e := echo.New()
+		req := httptest.NewRequest(echo.POST, "/", strings.NewReader(""))
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.SetPath("user")
+		c.SetParamNames(`id`)
+		c.SetParamValues(`1`)
+
+		handler := handler.UserHTTPHandler{
+			Usecase: mockUCase,
+		}
+
+		handler.Update(c)
+
+		assert.Equal(t, http.StatusNotFound, rec.Code)
+		mockUCase.AssertExpectations(t)
+	})
+
+	t.Run("error", func(t *testing.T) {
+		mockUCase := new(mocks.Usecase)
+		mockUCase.On("Update", mock.AnythingOfType(`*entity.User`)).Return(errors.New(`error`)).Once()
+
+		e := echo.New()
+		req := httptest.NewRequest(echo.POST, "/", strings.NewReader(""))
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.SetPath("user")
+		c.SetParamNames(`id`)
+		c.SetParamValues(`1`)
+
+		handler := handler.UserHTTPHandler{
+			Usecase: mockUCase,
+		}
+
+		handler.Update(c)
 
 		assert.Equal(t, http.StatusInternalServerError, rec.Code)
 		mockUCase.AssertExpectations(t)

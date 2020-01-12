@@ -24,6 +24,7 @@ func NewUserHTTPHandler(g *echo.Group, u user.Usecase) {
 
 	g.POST(`/register`, handler.Register)
 	g.GET(`/user`, handler.Fetch)
+	g.PUT(`/user/:id`, handler.Update)
 }
 
 // Register ...
@@ -103,4 +104,34 @@ func (h *UserHTTPHandler) Fetch(c echo.Context) error {
 	c.Response().Header().Set(`X-Cursor`, strNextCursor)
 
 	return c.JSON(http.StatusOK, res)
+}
+
+// Update ...
+func (h *UserHTTPHandler) Update(c echo.Context) error {
+	usr := new(entity.User)
+	c.Bind(usr)
+
+	id, err := strconv.Atoi(c.Param(`id`))
+	if err != nil || id == 0 {
+		return c.JSON(http.StatusNotFound, &response.Wrapper{
+			Message: response.ErrNotFound.Error(),
+		})
+	}
+
+	usr.ID = int64(id)
+
+	err = h.Usecase.Update(usr)
+
+	if err != nil {
+		if err == response.ErrNotFound {
+			return c.JSON(http.StatusNotFound, &response.Wrapper{
+				Message: response.ErrNotFound.Error(),
+			})
+		}
+		return c.JSON(http.StatusInternalServerError, &response.Wrapper{
+			Message: response.ErrServer.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, usr)
 }

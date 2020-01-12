@@ -34,16 +34,37 @@ func (_m *Repository) Fetch(f *filter.User) ([]*entity.User, error) {
 	return r0, r1
 }
 
-// Store provides a mock function with given fields: _a0
-func (_m *Repository) Store(_a0 *entity.User) error {
-	ret := _m.Called(_a0)
+// Store provides a mock function with given fields: usr
+func (_m *Repository) Store(usr *entity.User) error {
+	ret := _m.Called(usr)
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(*entity.User) error); ok {
-		r0 = rf(_a0)
+		r0 = rf(usr)
 	} else {
 		r0 = ret.Error(0)
 	}
 
 	return r0
+}
+
+// Update provides a mock function with given fields: usr
+func (_m *Repository) Update(usr *entity.User) (bool, error) {
+	ret := _m.Called(usr)
+
+	var r0 bool
+	if rf, ok := ret.Get(0).(func(*entity.User) bool); ok {
+		r0 = rf(usr)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*entity.User) error); ok {
+		r1 = rf(usr)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }

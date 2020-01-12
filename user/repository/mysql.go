@@ -6,6 +6,7 @@ import (
 
 	"github.com/labstack/gommon/log"
 
+	"github.com/andhikagama/lmnlo/helper"
 	"github.com/andhikagama/lmnlo/models/entity"
 	"github.com/andhikagama/lmnlo/models/filter"
 	"github.com/andhikagama/lmnlo/user"
@@ -97,6 +98,55 @@ func (m *userRepository) Fetch(f *filter.User) ([]*entity.User, error) {
 	}
 
 	return result, err
+}
+
+func (m *userRepository) Update(usr *entity.User) (bool, error) {
+	trx, err := m.Conn.Begin()
+
+	if err != nil {
+		return false, err
+	}
+
+	query := sq.Update("user").
+		Set("email", usr.Email).
+		Set("address", usr.Address)
+
+	if usr.Password != `` {
+		encryptedPass, _ := helper.EncryptToString(usr.Password)
+		query.Set(`password`, encryptedPass)
+	}
+
+	query.Set("update_time", time.Now()).
+		Where("id = ?", usr.ID)
+
+	sql, args, _ := query.ToSql()
+	stmt, err := trx.Prepare(sql)
+	if err != nil {
+		trx.Rollback()
+		return false, err
+	}
+	defer stmt.Close()
+
+	result, err := stmt.Exec(args...)
+
+	if err != nil {
+		trx.Rollback()
+		return false, err
+	}
+
+	affected, err := result.RowsAffected()
+	if err != nil {
+		trx.Rollback()
+		return false, err
+	}
+
+	if affected != 1 {
+		trx.Rollback()
+		return false, nil
+	}
+
+	err = trx.Commit()
+	return true, nil
 }
 
 func (m *userRepository) unmarshal(rows *sql.Rows) ([]*entity.User, error) {
