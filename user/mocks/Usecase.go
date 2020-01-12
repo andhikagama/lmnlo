@@ -71,6 +71,29 @@ func (_m *Usecase) GetByID(id int64) (*entity.User, error) {
 	return r0, r1
 }
 
+// PartialUpdate provides a mock function with given fields: id, byteFacility
+func (_m *Usecase) PartialUpdate(id int64, byteFacility []byte) (*entity.User, error) {
+	ret := _m.Called(id, byteFacility)
+
+	var r0 *entity.User
+	if rf, ok := ret.Get(0).(func(int64, []byte) *entity.User); ok {
+		r0 = rf(id, byteFacility)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*entity.User)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(int64, []byte) error); ok {
+		r1 = rf(id, byteFacility)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Register provides a mock function with given fields: usr
 func (_m *Usecase) Register(usr *entity.User) error {
 	ret := _m.Called(usr)

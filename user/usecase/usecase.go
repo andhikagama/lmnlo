@@ -1,6 +1,11 @@
 package usecase
 
 import (
+	"encoding/json"
+	"time"
+
+	patch "gopkg.in/evanphx/json-patch.v4"
+
 	"github.com/andhikagama/lmnlo/helper"
 	"github.com/andhikagama/lmnlo/models/entity"
 	"github.com/andhikagama/lmnlo/models/filter"
@@ -83,4 +88,93 @@ func (u *userUsecase) Delete(id int64) error {
 	}
 
 	return nil
+}
+
+// PartialUpdate ...
+func (u *userUsecase) PartialUpdate(id int64, byteObj []byte) (*entity.User, error) {
+	existingUser, err := u.userRepo.GetByID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	if existingUser == nil {
+		return new(entity.User), response.ErrNotFound
+	}
+
+	jsonTarget, _ := json.Marshal(existingUser)
+
+	patchObj, err := patch.DecodePatch(byteObj)
+	if err != nil {
+		return nil, err
+	}
+
+	jsonTarget, err = patchObj.Apply(jsonTarget)
+	if err != nil {
+		return nil, err
+	}
+
+	updatedUser := new(entity.User)
+	err = json.Unmarshal(jsonTarget, updatedUser)
+
+	if err != nil {
+		return nil, err
+	}
+
+	ok, err := u.userRepo.Update(updatedUser)
+	if err != nil {
+		return nil, err
+	}
+
+	if !ok {
+		return nil, response.ErrNotFound
+	}
+
+	return updatedUser, nil
+}
+
+// Login ...
+func (u *userUsecase) Login(usr *entity.User) (*entity.User, error) {
+	encryptedPass, _ := helper.EncryptToString(usr.Password)
+	usr.Password = encryptedPass
+
+	f := new(filter.User)
+	f.Email = usr.Email
+	f.Password = usr.Password
+	f.Num = 1
+
+	usrs, err := u.userRepo.Fetch(f)
+	if len(usrs) == 0 {
+		return nil, response.ErrLogin
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	usr = usrs[0]
+	usr.Password = ``
+
+	cc := new(entity.Claims)
+	cc.User = usr
+	cc.IssuedAt = time.Now().Unix()
+	cc.ExpiresAt = time.Now().AddDate(0, 1, 0).Unix()
+
+	token := helper.GenerateTokenString(cc)
+	usr.Token = token
+
+	err = u.userRepo.InsertToken(usr.ID, token)
+	if err != nil {
+		return nil, err
+	}
+
+	ok, err := u.userRepo.Update(usr)
+	if err != nil {
+		return nil, err
+	}
+
+	if !ok {
+		return nil, nil
+	}
+
+	return usr, nil
 }

@@ -14,4 +14,5 @@ require (
 	github.com/stretchr/testify v1.4.0
 	github.com/vektra/mockery v0.0.0-20181123154057-e78b021dcbb5 // indirect
 	golang.org/x/crypto v0.0.0-20200109152110-61a87790db17
+	gopkg.in/evanphx/json-patch.v4 v4.5.0
 )

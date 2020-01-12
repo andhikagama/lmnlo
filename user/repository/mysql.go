@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/labstack/gommon/log"
@@ -69,6 +70,10 @@ func (m *userRepository) Fetch(f *filter.User) ([]*entity.User, error) {
 
 	if f.Email != `` {
 		query.Where(`email = ?`, f.Email)
+	}
+
+	if f.Password != `` {
+		query.Where(`password = ?`, f.Password)
 	}
 
 	if f.Address != `` {
@@ -145,6 +150,7 @@ func (m *userRepository) Update(usr *entity.User) (bool, error) {
 		return false, nil
 	}
 
+	usr.Password = ``
 	err = trx.Commit()
 	return true, nil
 }
@@ -210,6 +216,35 @@ func (m *userRepository) Delete(id int64) (bool, error) {
 
 	err = trx.Commit()
 	return true, nil
+}
+
+func (m *userRepository) InsertToken(uid int64, token string) error {
+	trx, err := m.Conn.Begin()
+	if err != nil {
+		return err
+	}
+
+	query := sq.Insert("token")
+	query.Columns("user_id", "token", "create_time")
+	query.Values(uid, token, time.Now())
+	sql, args, _ := query.ToSql()
+
+	stmt, err := trx.Prepare(sql)
+	if err != nil {
+		trx.Rollback()
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(args...)
+	fmt.Println(err)
+
+	if err != nil {
+		trx.Rollback()
+		return err
+	}
+
+	return trx.Commit()
 }
 
 func (m *userRepository) unmarshal(rows *sql.Rows) ([]*entity.User, error) {

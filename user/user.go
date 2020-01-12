@@ -12,6 +12,7 @@ type Repository interface {
 	Update(usr *entity.User) (bool, error)
 	GetByID(id int64) (*entity.User, error)
 	Delete(id int64) (bool, error)
+	InsertToken(uid int64, token string) error
 }
 
 // Usecase represents business logic
@@ -21,4 +22,6 @@ type Usecase interface {
 	Update(usr *entity.User) error
 	GetByID(id int64) (*entity.User, error)
 	Delete(id int64) error
+	PartialUpdate(id int64, byteFacility []byte) (*entity.User, error)
+	Login(u *entity.User) (*entity.User, error)
 }

@@ -7,6 +7,9 @@ import (
 	"encoding/hex"
 	"strings"
 
+	"github.com/andhikagama/lmnlo/models/entity"
+	"github.com/dgrijalva/jwt-go"
+	"github.com/labstack/gommon/log"
 	"golang.org/x/crypto/blowfish"
 )
 
@@ -115,4 +118,13 @@ func GenerateRandomHex(n int) (string, error) {
 	rndStr := strings.ToUpper(hex.EncodeToString(bytes))
 
 	return rndStr, nil
+}
+
+func GenerateTokenString(cc *entity.Claims) string {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, cc)
+	tokenstring, err := token.SignedString([]byte(_CipherKey))
+	if err != nil {
+		log.Error(err)
+	}
+	return tokenstring
 }

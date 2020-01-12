@@ -1,6 +1,7 @@
 package http
 
 import (
+	"io/ioutil"
 	"net/http"
 	"strconv"
 
@@ -26,6 +27,9 @@ func NewUserHTTPHandler(g *echo.Group, u user.Usecase) {
 	g.GET(`/user`, handler.Fetch)
 	g.PUT(`/user/:id`, handler.Update)
 	g.GET(`/user/:id`, handler.GetByID)
+	g.DELETE(`/user/:id`, handler.Delete)
+	g.PATCH(`/user/:id`, handler.PartialUpdate)
+	g.POST(`/login`, handler.Login)
 }
 
 // Register ...
@@ -163,7 +167,7 @@ func (h *UserHTTPHandler) GetByID(c echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
-// GetByID ...
+// Delete ...
 func (h *UserHTTPHandler) Delete(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param(`id`))
 	if err != nil || id == 0 {
@@ -187,4 +191,63 @@ func (h *UserHTTPHandler) Delete(c echo.Context) error {
 	}
 
 	return c.NoContent(http.StatusNoContent)
+}
+
+// PartialUpdate ...
+func (h *UserHTTPHandler) PartialUpdate(c echo.Context) error {
+	var id int64
+
+	if c.Param(`id`) != `` {
+		intID, err := strconv.Atoi(c.Param(`id`))
+		if err != nil {
+			return c.JSON(http.StatusNotFound, &response.Wrapper{
+				Message: response.ErrNotFound.Error(),
+			})
+		}
+
+		id = int64(intID)
+	}
+
+	jsonPatch, _ := ioutil.ReadAll(c.Request().Body)
+	res, err := h.Usecase.PartialUpdate(id, jsonPatch)
+
+	if err != nil {
+		if err == response.ErrNotFound {
+			return c.JSON(http.StatusNotFound, &response.Wrapper{
+				Message: response.ErrNotFound.Error(),
+			})
+		}
+		return c.JSON(http.StatusInternalServerError, &response.Wrapper{
+			Message: response.ErrServer.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, res)
+}
+
+// Login ...
+func (h *UserHTTPHandler) Login(c echo.Context) error {
+	auth := new(entity.User)
+	c.Bind(auth)
+
+	res, err := h.Usecase.Login(auth)
+	if err != nil {
+		if err == response.ErrLogin {
+			return c.JSON(http.StatusNotFound, &response.Wrapper{
+				Message: err.Error(),
+			})
+		}
+
+		if err == response.ErrForbidden {
+			return c.JSON(http.StatusForbidden, &response.Wrapper{
+				Message: err.Error(),
+			})
+		}
+
+		return c.JSON(http.StatusInternalServerError, &response.Wrapper{
+			Message: response.ErrServer.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, res)
 }
