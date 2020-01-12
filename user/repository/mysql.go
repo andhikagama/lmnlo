@@ -2,7 +2,6 @@ package mysql
 
 import (
 	"database/sql"
-	"fmt"
 	"time"
 
 	"github.com/labstack/gommon/log"
@@ -237,7 +236,6 @@ func (m *userRepository) InsertToken(uid int64, token string) error {
 	defer stmt.Close()
 
 	_, err = stmt.Exec(args...)
-	fmt.Println(err)
 
 	if err != nil {
 		trx.Rollback()
@@ -245,6 +243,40 @@ func (m *userRepository) InsertToken(uid int64, token string) error {
 	}
 
 	return trx.Commit()
+}
+
+func (m *userRepository) ValidateToken(token string) (bool, error) {
+	query := sq.Select(`1`)
+	query.From(`token`)
+	query.Where(`token = ?`, token)
+
+	sql, args, _ := query.ToSql()
+
+	rows, err := m.Conn.Query(sql, args...)
+	defer rows.Close()
+	if err != nil {
+		return false, err
+	}
+
+	var res int64
+
+	for rows.Next() {
+
+		err := rows.Scan(
+			&res,
+		)
+
+		if err != nil {
+			log.Error(err, res)
+			return false, err
+		}
+	}
+
+	if res == int64(0) {
+		return false, err
+	}
+
+	return true, nil
 }
 
 func (m *userRepository) unmarshal(rows *sql.Rows) ([]*entity.User, error) {

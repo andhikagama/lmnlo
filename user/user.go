@@ -13,6 +13,7 @@ type Repository interface {
 	GetByID(id int64) (*entity.User, error)
 	Delete(id int64) (bool, error)
 	InsertToken(uid int64, token string) error
+	ValidateToken(token string) (bool, error)
 }
 
 // Usecase represents business logic

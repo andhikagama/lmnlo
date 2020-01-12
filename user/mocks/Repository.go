@@ -78,6 +78,20 @@ func (_m *Repository) GetByID(id int64) (*entity.User, error) {
 	return r0, r1
 }
 
+// InsertToken provides a mock function with given fields: uid, token
+func (_m *Repository) InsertToken(uid int64, token string) error {
+	ret := _m.Called(uid, token)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(int64, string) error); ok {
+		r0 = rf(uid, token)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // Store provides a mock function with given fields: usr
 func (_m *Repository) Store(usr *entity.User) error {
 	ret := _m.Called(usr)
@@ -106,6 +120,27 @@ func (_m *Repository) Update(usr *entity.User) (bool, error) {
 	var r1 error
 	if rf, ok := ret.Get(1).(func(*entity.User) error); ok {
 		r1 = rf(usr)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ValidateToken provides a mock function with given fields: token
+func (_m *Repository) ValidateToken(token string) (bool, error) {
+	ret := _m.Called(token)
+
+	var r0 bool
+	if rf, ok := ret.Get(0).(func(string) bool); ok {
+		r0 = rf(token)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(token)
 	} else {
 		r1 = ret.Error(1)
 	}

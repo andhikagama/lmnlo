@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 
+	_customMiddleware "github.com/andhikagama/lmnlo/cmiddleware/usecase"
 	cfg "github.com/andhikagama/lmnlo/config"
 	userHandler "github.com/andhikagama/lmnlo/user/delivery"
 	_userRepository "github.com/andhikagama/lmnlo/user/repository"
@@ -69,6 +70,10 @@ func main() {
 
 	//Initiate Repository for each entity
 	userRepository := _userRepository.NewUserRepository(db)
+
+	// Initiate Custom Middleware
+	customMiddleware := _customMiddleware.NewMiddlewareUsecase(userRepository)
+	gv1.Use(customMiddleware.CheckAuthHeader)
 
 	//Initiate Usecase for each entity
 	userUsecase := _userUsecase.NewUserUsecase(userRepository)

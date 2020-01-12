@@ -128,3 +128,21 @@ func GenerateTokenString(cc *entity.Claims) string {
 	}
 	return tokenstring
 }
+
+func ClaimTokenString(tokenString string) (*entity.User, error) {
+	var usr *entity.User
+
+	token, err := jwt.ParseWithClaims(tokenString, &entity.Claims{}, func(token *jwt.Token) (interface{}, error) {
+		return []byte(_CipherKey), nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if claims, ok := token.Claims.(*entity.Claims); ok && token.Valid {
+		usr = claims.User
+	}
+
+	return usr, nil
+}
