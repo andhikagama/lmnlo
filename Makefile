@@ -1,7 +1,8 @@
-BINARY=holy
+BINARY=lmnlo
+OS=linux
 
 build:
-		GOOS=linux GOHOSTOS=linux go build -o ${BINARY}
+		GOOS=${OS} GOHOSTOS=${OS} go build -o ${BINARY}
 
 test:
 	./test-cover.sh

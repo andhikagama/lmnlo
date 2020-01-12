@@ -2,8 +2,10 @@ package http
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/andhikagama/lmnlo/models/entity"
+	"github.com/andhikagama/lmnlo/models/filter"
 	"github.com/andhikagama/lmnlo/models/response"
 	"github.com/andhikagama/lmnlo/user"
 	"github.com/labstack/echo"
@@ -21,6 +23,7 @@ func NewUserHTTPHandler(g *echo.Group, u user.Usecase) {
 	}
 
 	g.POST(`/register`, handler.Register)
+	g.GET(`/user`, handler.Fetch)
 }
 
 // Register ...
@@ -43,4 +46,61 @@ func (h *UserHTTPHandler) Register(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, usr)
+}
+
+// Fetch ...
+func (h *UserHTTPHandler) Fetch(c echo.Context) error {
+	f := new(filter.User)
+
+	f.Num = int64(200)
+	if c.QueryParam(`num`) != `` {
+		intNum, err := strconv.Atoi(c.QueryParam(`num`))
+
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, &response.Wrapper{
+				Message: response.ErrBadRequest.Error(),
+			})
+		}
+
+		f.Num = int64(intNum)
+	}
+
+	f.Cursor = int64(0)
+	strNextCursor := `0`
+	if c.QueryParam(`cursor`) != `` {
+		intCursor, err := strconv.Atoi(c.QueryParam(`cursor`))
+
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, &response.Wrapper{
+				Message: response.ErrBadRequest.Error(),
+			})
+		}
+
+		f.Cursor = int64(intCursor)
+		strNextCursor = c.QueryParam(`cursor`)
+	}
+
+	if c.QueryParam(`email`) != `` {
+		f.Email = c.QueryParam(`email`)
+	}
+
+	if c.QueryParam(`address`) != `` {
+		f.Address = c.QueryParam(`address`)
+	}
+
+	res, err := h.Usecase.Fetch(f)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, &response.Wrapper{
+			Message: response.ErrServer.Error(),
+		})
+	}
+
+	if len(res) > 0 {
+		nextCursor := res[len(res)-1].ID
+		strNextCursor = strconv.Itoa(int(nextCursor))
+	}
+
+	c.Response().Header().Set(`X-Cursor`, strNextCursor)
+
+	return c.JSON(http.StatusOK, res)
 }

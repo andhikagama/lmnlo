@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/andhikagama/lmnlo/models/entity"
+	"github.com/andhikagama/lmnlo/models/filter"
 	userRepo "github.com/andhikagama/lmnlo/user/repository"
 )
 
@@ -83,6 +84,92 @@ func TestStore(t *testing.T) {
 		err := repo.Store(&mockUser)
 
 		assert.Error(t, err)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+}
+
+func TestFetch(t *testing.T) {
+	db, mock, err := sqlmock.New()
+
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+
+	defer db.Close()
+
+	t.Run("success", func(t *testing.T) {
+		rows := sqlmock.NewRows([]string{
+			`id`, `email`, `address`,
+		}).AddRow(
+			mockUsers[0].ID, mockUsers[0].Email, mockUsers[0].Address,
+		)
+
+		mock.ExpectQuery(`SELECT (.+) FROM user`).WillReturnRows(rows)
+
+		f := new(filter.User)
+		repo := userRepo.NewUserRepository(db)
+		res, err := repo.Fetch(f)
+
+		assert.NoError(t, err)
+		assert.Equal(t, mockUsers[0].ID, res[0].ID)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("success-with-params", func(t *testing.T) {
+		rows := sqlmock.NewRows([]string{
+			`id`, `email`, `address`,
+		}).AddRow(
+			mockUsers[0].ID, mockUsers[0].Email, mockUsers[0].Address,
+		)
+
+		mock.ExpectQuery(`SELECT (.+) FROM user`).WillReturnRows(rows)
+
+		f := new(filter.User)
+		f.Email = `andhika.gama@outlook.com`
+
+		repo := userRepo.NewUserRepository(db)
+		res, err := repo.Fetch(f)
+
+		assert.NoError(t, err)
+		assert.Equal(t, mockUsers[0].ID, res[0].ID)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("success-no-data", func(t *testing.T) {
+		rows := sqlmock.NewRows([]string{
+			`id`, `email`, `address`,
+		})
+
+		mock.ExpectQuery(`SELECT (.+) FROM user`).WillReturnRows(rows)
+
+		f := new(filter.User)
+
+		repo := userRepo.NewUserRepository(db)
+		res, err := repo.Fetch(f)
+
+		assert.NoError(t, err)
+		assert.Len(t, res, 0)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("error", func(t *testing.T) {
+		rows := sqlmock.NewRows([]string{
+			`id`, `email`, `address`,
+		}).AddRow(
+			mockUsers[0].ID, mockUsers[0].Email, nil,
+		).RowError(
+			1, fmt.Errorf("row error"),
+		)
+
+		mock.ExpectQuery(`SELECT (.+) FROM user`).WillReturnRows(rows)
+
+		f := new(filter.User)
+
+		repo := userRepo.NewUserRepository(db)
+		res, err := repo.Fetch(f)
+
+		assert.Error(t, err)
+		assert.Nil(t, res)
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 }

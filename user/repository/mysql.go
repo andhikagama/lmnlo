@@ -7,6 +7,7 @@ import (
 	"github.com/labstack/gommon/log"
 
 	"github.com/andhikagama/lmnlo/models/entity"
+	"github.com/andhikagama/lmnlo/models/filter"
 	"github.com/andhikagama/lmnlo/user"
 	sq "github.com/elgris/sqrl"
 	"github.com/sirupsen/logrus"
@@ -60,6 +61,44 @@ func (m *userRepository) Store(usr *entity.User) error {
 
 	return trx.Commit()
 }
+
+func (m *userRepository) Fetch(f *filter.User) ([]*entity.User, error) {
+	query := sq.Select(`id, email, address`)
+	query.From(`user`)
+
+	if f.Email != `` {
+		query.Where(`email = ?`, f.Email)
+	}
+
+	if f.Address != `` {
+		regx := `address REGEXP '` + f.Address + `'`
+		query.Where(regx)
+	}
+
+	if f.Cursor != 0 {
+		query.Where(`id  < ?`, f.Cursor)
+	}
+
+	query.OrderBy(`id DESC`).Limit(uint64(f.Num))
+
+	query.Where(`delete_time IS NULL`)
+
+	sql, args, _ := query.ToSql()
+	res, err := m.Conn.Query(sql, args...)
+	defer res.Close()
+
+	result, err := m.unmarshal(res)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(result) == 0 {
+		return make([]*entity.User, 0), nil
+	}
+
+	return result, err
+}
+
 func (m *userRepository) unmarshal(rows *sql.Rows) ([]*entity.User, error) {
 	results := []*entity.User{}
 
@@ -68,6 +107,8 @@ func (m *userRepository) unmarshal(rows *sql.Rows) ([]*entity.User, error) {
 
 		err := rows.Scan(
 			&usr.ID,
+			&usr.Email,
+			&usr.Address,
 		)
 
 		if err != nil {

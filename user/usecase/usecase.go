@@ -3,6 +3,8 @@ package usecase
 import (
 	"github.com/andhikagama/lmnlo/helper"
 	"github.com/andhikagama/lmnlo/models/entity"
+	"github.com/andhikagama/lmnlo/models/filter"
+	"github.com/andhikagama/lmnlo/models/response"
 	"github.com/andhikagama/lmnlo/user"
 )
 
@@ -21,6 +23,18 @@ func NewUserUsecase(
 
 // Register ...
 func (u *userUsecase) Register(usr *entity.User) error {
+	f := new(filter.User)
+	f.Email = usr.Email
+	f.Num = 1
+
+	usrs, err := u.userRepo.Fetch(f)
+	if err != nil {
+		return err
+	}
+
+	if len(usrs) != 0 {
+		return response.ErrAlreadyExist
+	}
 
 	encryptedPass, err := helper.EncryptToString(usr.Password)
 	if err != nil {
@@ -29,4 +43,9 @@ func (u *userUsecase) Register(usr *entity.User) error {
 	usr.Password = encryptedPass
 
 	return u.userRepo.Store(usr)
+}
+
+// Fetch ...
+func (u *userUsecase) Fetch(f *filter.User) ([]*entity.User, error) {
+	return u.userRepo.Fetch(f)
 }

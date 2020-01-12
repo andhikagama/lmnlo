@@ -5,20 +5,26 @@ import (
 	"testing"
 
 	"github.com/andhikagama/lmnlo/models/entity"
+	"github.com/andhikagama/lmnlo/models/filter"
 	"github.com/andhikagama/lmnlo/user/mocks"
 	"github.com/andhikagama/lmnlo/user/usecase"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
+var mockUser = entity.User{
+	ID:       1,
+	Email:    `andhika.gama@outlook.com`,
+	Password: `aiueo`,
+	Address:  `Menteng`,
+}
+
+var mockUsers = []*entity.User{
+	&mockUser,
+}
+
 func TestStore(t *testing.T) {
 	mockUserRepo := new(mocks.Repository)
-	mockUser := entity.User{
-		ID:       1,
-		Email:    `andhika.gama@outlook.com`,
-		Password: `aiueo`,
-		Address:  `Menteng`,
-	}
 
 	t.Run("success", func(t *testing.T) {
 		mockUserRepo.On("Store", mock.AnythingOfType("*entity.User")).Return(nil).Once()
@@ -41,62 +47,47 @@ func TestStore(t *testing.T) {
 	})
 }
 
-// func TestFetch(t *testing.T) {
-// 	mockUserRepo := new(mocks.Repository)
-// 	mockUser := entity.User{
-// 		ID:            1,
-// 		Title:         `Align pillow`,
-// 		Group:         `Beds`,
-// 		Type:          `count`,
-// 		Checked:       false,
-// 		Count:         0,
-// 		ImageURL:      ``,
-// 		Description:   ``,
-// 		ProductTypeID: 3,
-// 	}
+func TestFetch(t *testing.T) {
+	mockUserRepo := new(mocks.Repository)
 
-// 	mockUsers := []*entity.User{
-// 		&mockUser,
-// 	}
+	t.Run("success", func(t *testing.T) {
+		f := new(filter.User)
+		mockUserRepo.On("Fetch", mock.AnythingOfType("*filter.User")).Return(mockUsers, nil).Once()
+		u := usecase.NewUserUsecase(mockUserRepo)
 
-// 	t.Run("success", func(t *testing.T) {
-// 		f := new(filter.User)
-// 		mockUserRepo.On("Fetch", mock.AnythingOfType("*filter.User")).Return(mockUsers, nil).Once()
-// 		u := usecase.NewUserUsecase(mockUserRepo)
+		res, err := u.Fetch(f)
 
-// 		res, err := u.Fetch(f)
+		assert.NoError(t, err)
+		assert.Equal(t, mockUsers, res)
+		mockUserRepo.AssertExpectations(t)
+	})
 
-// 		assert.NoError(t, err)
-// 		assert.Equal(t, mockUsers, res)
-// 		mockUserRepo.AssertExpectations(t)
-// 	})
+	t.Run("success-no-data", func(t *testing.T) {
+		f := new(filter.User)
+		mockEmptyUsers := make([]*entity.User, 0)
+		mockUserRepo.On("Fetch", mock.AnythingOfType("*filter.User")).Return(mockEmptyUsers, nil).Once()
+		u := usecase.NewUserUsecase(mockUserRepo)
 
-// 	t.Run("success-no-data", func(t *testing.T) {
-// 		f := new(filter.User)
-// 		mockEmptyUsers := make([]*entity.User, 0)
-// 		mockUserRepo.On("Fetch", mock.AnythingOfType("*filter.User")).Return(mockEmptyUsers, nil).Once()
-// 		u := usecase.NewUserUsecase(mockUserRepo)
+		res, err := u.Fetch(f)
 
-// 		res, err := u.Fetch(f)
+		assert.NoError(t, err)
+		assert.Equal(t, mockEmptyUsers, res)
+		mockUserRepo.AssertExpectations(t)
+	})
 
-// 		assert.NoError(t, err)
-// 		assert.Equal(t, mockEmptyUsers, res)
-// 		mockUserRepo.AssertExpectations(t)
-// 	})
+	t.Run("error", func(t *testing.T) {
+		f := new(filter.User)
 
-// 	t.Run("error", func(t *testing.T) {
-// 		f := new(filter.User)
+		mockUserRepo.On("Fetch", mock.AnythingOfType("*filter.User")).Return(nil, errors.New(`Error`)).Once()
+		u := usecase.NewUserUsecase(mockUserRepo)
 
-// 		mockUserRepo.On("Fetch", mock.AnythingOfType("*filter.User")).Return(nil, errors.New(`Error`)).Once()
-// 		u := usecase.NewUserUsecase(mockUserRepo)
+		res, err := u.Fetch(f)
 
-// 		res, err := u.Fetch(f)
-
-// 		assert.Error(t, err)
-// 		assert.Nil(t, res)
-// 		mockUserRepo.AssertExpectations(t)
-// 	})
-// }
+		assert.Error(t, err)
+		assert.Nil(t, res)
+		mockUserRepo.AssertExpectations(t)
+	})
+}
 
 // func TestUpdate(t *testing.T) {
 // 	mockUserRepo := new(mocks.Repository)

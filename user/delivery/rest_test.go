@@ -69,3 +69,112 @@ func TestStore(t *testing.T) {
 		mockUCase.AssertExpectations(t)
 	})
 }
+
+func TestFetch(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		mockUCase := new(mocks.Usecase)
+		mockUCase.On("Fetch", mock.AnythingOfType(`*filter.User`)).Return(mockUsers, nil).Once()
+
+		e := echo.New()
+		req := httptest.NewRequest(echo.GET, "/", strings.NewReader(""))
+
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.SetPath("user")
+
+		handler := handler.UserHTTPHandler{
+			Usecase: mockUCase,
+		}
+		handler.Fetch(c)
+
+		assert.Equal(t, http.StatusOK, rec.Code)
+		mockUCase.AssertExpectations(t)
+	})
+
+	t.Run("success-with-param", func(t *testing.T) {
+		mockUCase := new(mocks.Usecase)
+		mockUCase.On("Fetch", mock.AnythingOfType(`*filter.User`)).Return(mockUsers, nil).Once()
+
+		e := echo.New()
+		req := httptest.NewRequest(echo.GET, "/", strings.NewReader(""))
+
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.SetPath("user")
+		c.QueryParams().Add(`email`, `andhika.gama@outlook.com`)
+		c.QueryParams().Add(`num`, `100`)
+		c.QueryParams().Add(`cursor`, `0`)
+		c.QueryParams().Add(`address`, `men`)
+
+		handler := handler.UserHTTPHandler{
+			Usecase: mockUCase,
+		}
+		handler.Fetch(c)
+
+		assert.Equal(t, http.StatusOK, rec.Code)
+		mockUCase.AssertExpectations(t)
+	})
+
+	t.Run("error-bad-param", func(t *testing.T) {
+		mockUCase := new(mocks.Usecase)
+
+		e := echo.New()
+		req := httptest.NewRequest(echo.GET, "/", strings.NewReader(""))
+
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.SetPath("user")
+		c.QueryParams().Add(`num`, `aaa`)
+
+		handler := handler.UserHTTPHandler{
+			Usecase: mockUCase,
+		}
+		handler.Fetch(c)
+
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+		mockUCase.AssertExpectations(t)
+	})
+	t.Run("error-bad-param", func(t *testing.T) {
+		mockUCase := new(mocks.Usecase)
+
+		e := echo.New()
+		req := httptest.NewRequest(echo.GET, "/", strings.NewReader(""))
+
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.SetPath("user")
+		c.QueryParams().Add(`cursor`, `aaa`)
+
+		handler := handler.UserHTTPHandler{
+			Usecase: mockUCase,
+		}
+		handler.Fetch(c)
+
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+		mockUCase.AssertExpectations(t)
+	})
+
+	t.Run("error", func(t *testing.T) {
+
+		mockUCase := new(mocks.Usecase)
+		mockUCase.On("Fetch", mock.AnythingOfType(`*filter.User`)).Return(nil, errors.New(`Error`)).Once()
+
+		e := echo.New()
+		req := httptest.NewRequest(echo.GET, "/user", strings.NewReader(""))
+
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.SetPath("user")
+		handler := handler.UserHTTPHandler{
+			Usecase: mockUCase,
+		}
+		handler.Fetch(c)
+
+		assert.Equal(t, http.StatusInternalServerError, rec.Code)
+		mockUCase.AssertExpectations(t)
+	})
+}
