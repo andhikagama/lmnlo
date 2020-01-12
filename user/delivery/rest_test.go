@@ -29,7 +29,7 @@ var mockUsers = []*entity.User{
 func TestStore(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		mockUCase := new(mocks.Usecase)
-		mockUCase.On("Store", mock.AnythingOfType(`*entity.User`)).Return(nil).Once()
+		mockUCase.On("Register", mock.AnythingOfType(`*entity.User`)).Return(nil).Once()
 
 		e := echo.New()
 		req := httptest.NewRequest(echo.POST, "/", strings.NewReader(""))
@@ -49,7 +49,7 @@ func TestStore(t *testing.T) {
 
 	t.Run("error", func(t *testing.T) {
 		mockUCase := new(mocks.Usecase)
-		mockUCase.On("Store", mock.AnythingOfType(`*entity.User`)).Return(errors.New(`error`)).Once()
+		mockUCase.On("Register", mock.AnythingOfType(`*entity.User`)).Return(errors.New(`error`)).Once()
 
 		e := echo.New()
 		req := httptest.NewRequest(echo.POST, "/", strings.NewReader(""))
