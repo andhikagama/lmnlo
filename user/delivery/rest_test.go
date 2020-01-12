@@ -208,7 +208,7 @@ func TestUpdate(t *testing.T) {
 		mockUCase.On("Update", mock.AnythingOfType(`*entity.User`)).Return(nil).Once()
 
 		e := echo.New()
-		req := httptest.NewRequest(echo.POST, "/", strings.NewReader(""))
+		req := httptest.NewRequest(echo.PUT, "/", strings.NewReader(""))
 		rec := httptest.NewRecorder()
 
 		c := e.NewContext(req, rec)
@@ -229,7 +229,7 @@ func TestUpdate(t *testing.T) {
 		mockUCase := new(mocks.Usecase)
 
 		e := echo.New()
-		req := httptest.NewRequest(echo.POST, "/", strings.NewReader(""))
+		req := httptest.NewRequest(echo.PUT, "/", strings.NewReader(""))
 		rec := httptest.NewRecorder()
 
 		c := e.NewContext(req, rec)
@@ -252,7 +252,7 @@ func TestUpdate(t *testing.T) {
 		mockUCase.On("Update", mock.AnythingOfType(`*entity.User`)).Return(response.ErrNotFound).Once()
 
 		e := echo.New()
-		req := httptest.NewRequest(echo.POST, "/", strings.NewReader(""))
+		req := httptest.NewRequest(echo.PUT, "/", strings.NewReader(""))
 		rec := httptest.NewRecorder()
 
 		c := e.NewContext(req, rec)
@@ -275,7 +275,7 @@ func TestUpdate(t *testing.T) {
 		mockUCase.On("Update", mock.AnythingOfType(`*entity.User`)).Return(errors.New(`error`)).Once()
 
 		e := echo.New()
-		req := httptest.NewRequest(echo.POST, "/", strings.NewReader(""))
+		req := httptest.NewRequest(echo.PUT, "/", strings.NewReader(""))
 		rec := httptest.NewRecorder()
 
 		c := e.NewContext(req, rec)
@@ -288,6 +288,98 @@ func TestUpdate(t *testing.T) {
 		}
 
 		handler.Update(c)
+
+		assert.Equal(t, http.StatusInternalServerError, rec.Code)
+		mockUCase.AssertExpectations(t)
+	})
+}
+
+func TestGetByID(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		mockUCase := new(mocks.Usecase)
+		mockUCase.On("GetByID", mock.AnythingOfType(`int64`)).Return(&mockUser, nil).Once()
+
+		e := echo.New()
+		req := httptest.NewRequest(echo.GET, "/", strings.NewReader(""))
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.SetPath("user")
+		c.SetParamNames(`id`)
+		c.SetParamValues(`1`)
+
+		handler := handler.UserHTTPHandler{
+			Usecase: mockUCase,
+		}
+		handler.GetByID(c)
+
+		assert.Equal(t, http.StatusOK, rec.Code)
+		mockUCase.AssertExpectations(t)
+	})
+
+	t.Run("bad-params", func(t *testing.T) {
+		mockUCase := new(mocks.Usecase)
+
+		e := echo.New()
+		req := httptest.NewRequest(echo.GET, "/", strings.NewReader(""))
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.SetPath("user")
+		c.SetParamNames(`id`)
+		c.SetParamValues(`a`)
+
+		handler := handler.UserHTTPHandler{
+			Usecase: mockUCase,
+		}
+
+		handler.GetByID(c)
+
+		assert.Equal(t, http.StatusNotFound, rec.Code)
+		mockUCase.AssertExpectations(t)
+	})
+
+	t.Run("not-found", func(t *testing.T) {
+		mockUCase := new(mocks.Usecase)
+		mockUCase.On("GetByID", mock.AnythingOfType(`int64`)).Return(new(entity.User), response.ErrNotFound).Once()
+
+		e := echo.New()
+		req := httptest.NewRequest(echo.GET, "/", strings.NewReader(""))
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.SetPath("user")
+		c.SetParamNames(`id`)
+		c.SetParamValues(`1`)
+
+		handler := handler.UserHTTPHandler{
+			Usecase: mockUCase,
+		}
+
+		handler.GetByID(c)
+
+		assert.Equal(t, http.StatusNotFound, rec.Code)
+		mockUCase.AssertExpectations(t)
+	})
+
+	t.Run("error", func(t *testing.T) {
+		mockUCase := new(mocks.Usecase)
+		mockUCase.On("GetByID", mock.AnythingOfType(`int64`)).Return(new(entity.User), errors.New(`error`)).Once()
+
+		e := echo.New()
+		req := httptest.NewRequest(echo.POST, "/", strings.NewReader(""))
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.SetPath("user")
+		c.SetParamNames(`id`)
+		c.SetParamValues(`1`)
+
+		handler := handler.UserHTTPHandler{
+			Usecase: mockUCase,
+		}
+
+		handler.GetByID(c)
 
 		assert.Equal(t, http.StatusInternalServerError, rec.Code)
 		mockUCase.AssertExpectations(t)

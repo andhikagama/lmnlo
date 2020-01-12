@@ -139,6 +139,43 @@ func TestUpdate(t *testing.T) {
 	})
 }
 
+func TestGetByID(t *testing.T) {
+	mockUserRepo := new(mocks.Repository)
+
+	t.Run("success", func(t *testing.T) {
+		mockUserRepo.On("GetByID", mock.AnythingOfType("int64")).Return(&mockUser, nil).Once()
+		u := usecase.NewUserUsecase(mockUserRepo)
+
+		res, err := u.GetByID(1)
+
+		assert.NoError(t, err)
+		assert.Equal(t, &mockUser, res)
+		mockUserRepo.AssertExpectations(t)
+	})
+
+	t.Run("success-no-data", func(t *testing.T) {
+		mockUserRepo.On("GetByID", mock.AnythingOfType("int64")).Return(new(entity.User), nil).Once()
+		u := usecase.NewUserUsecase(mockUserRepo)
+
+		res, err := u.GetByID(99)
+
+		assert.NoError(t, err)
+		assert.Equal(t, int64(0), res.ID)
+		mockUserRepo.AssertExpectations(t)
+	})
+
+	t.Run("error", func(t *testing.T) {
+		mockUserRepo.On("GetByID", mock.AnythingOfType("int64")).Return(nil, errors.New(`Error`)).Once()
+		u := usecase.NewUserUsecase(mockUserRepo)
+
+		res, err := u.GetByID(22)
+
+		assert.Error(t, err)
+		assert.Nil(t, res)
+		mockUserRepo.AssertExpectations(t)
+	})
+}
+
 // func TestDelete(t *testing.T) {
 // 	mockUserRepo := new(mocks.Repository)
 

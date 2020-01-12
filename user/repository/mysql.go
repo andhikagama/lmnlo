@@ -149,6 +149,27 @@ func (m *userRepository) Update(usr *entity.User) (bool, error) {
 	return true, nil
 }
 
+func (m *userRepository) GetByID(id int64) (*entity.User, error) {
+	query := sq.Select(`id, email, address`)
+	query.From(`user`)
+	query.Where(`id = ?`, id)
+
+	sql, args, _ := query.ToSql()
+	res, err := m.Conn.Query(sql, args...)
+	defer res.Close()
+
+	result, err := m.unmarshal(res)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(result) == 0 {
+		return new(entity.User), nil
+	}
+
+	return result[0], err
+}
+
 func (m *userRepository) unmarshal(rows *sql.Rows) ([]*entity.User, error) {
 	results := []*entity.User{}
 

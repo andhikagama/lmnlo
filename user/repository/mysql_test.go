@@ -256,3 +256,64 @@ func TestUpdate(t *testing.T) {
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 }
+
+func TestGetByID(t *testing.T) {
+	db, mock, err := sqlmock.New()
+
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+
+	defer db.Close()
+
+	t.Run("success", func(t *testing.T) {
+		rows := sqlmock.NewRows([]string{
+			`id`, `email`, `address`,
+		}).AddRow(
+			mockUsers[0].ID, mockUsers[0].Email, mockUsers[0].Address,
+		)
+
+		mock.ExpectQuery(`SELECT (.+) FROM user`).WillReturnRows(rows)
+
+		repo := userRepo.NewUserRepository(db)
+		res, err := repo.GetByID(mockUser.ID)
+
+		assert.NoError(t, err)
+		assert.Equal(t, mockUsers[0].ID, res.ID)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("success-no-data", func(t *testing.T) {
+		rows := sqlmock.NewRows([]string{
+			`id`, `email`, `address`,
+		})
+
+		mock.ExpectQuery(`SELECT (.+) FROM user`).WillReturnRows(rows)
+
+		repo := userRepo.NewUserRepository(db)
+		res, err := repo.GetByID(mockUser.ID)
+
+		assert.NoError(t, err)
+		assert.Equal(t, res.ID, int64(0))
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("error", func(t *testing.T) {
+		rows := sqlmock.NewRows([]string{
+			`id`, `email`, `address`,
+		}).AddRow(
+			mockUsers[0].ID, mockUsers[0].Email, nil,
+		).RowError(
+			1, fmt.Errorf("row error"),
+		)
+
+		mock.ExpectQuery(`SELECT (.+) FROM user`).WillReturnRows(rows)
+
+		repo := userRepo.NewUserRepository(db)
+		res, err := repo.GetByID(mockUser.ID)
+
+		assert.Error(t, err)
+		assert.Nil(t, res)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+}

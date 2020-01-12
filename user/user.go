@@ -10,6 +10,7 @@ type Repository interface {
 	Store(usr *entity.User) error
 	Fetch(f *filter.User) ([]*entity.User, error)
 	Update(usr *entity.User) (bool, error)
+	GetByID(id int64) (*entity.User, error)
 }
 
 // Usecase represents business logic
@@ -17,4 +18,5 @@ type Usecase interface {
 	Register(usr *entity.User) error
 	Fetch(f *filter.User) ([]*entity.User, error)
 	Update(usr *entity.User) error
+	GetByID(id int64) (*entity.User, error)
 }

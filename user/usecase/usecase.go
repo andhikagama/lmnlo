@@ -64,3 +64,8 @@ func (u *userUsecase) Update(usr *entity.User) error {
 
 	return nil
 }
+
+// GetByID ...
+func (u *userUsecase) GetByID(id int64) (*entity.User, error) {
+	return u.userRepo.GetByID(id)
+}
